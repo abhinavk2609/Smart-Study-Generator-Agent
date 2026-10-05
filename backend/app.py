@@ -168,6 +168,8 @@ def query_agent():
 
     query = sanitise_text(raw_query, max_chars=5000)
     action_override = data.get("action")  # e.g. "create_flashcards" from UI button
+    if not isinstance(action_override, str):
+        action_override = None
     student_profile = _current_progress(session_id).get("profile", {})
 
     # Combine any uploaded documents

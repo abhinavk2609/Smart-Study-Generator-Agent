@@ -213,7 +213,7 @@ function setupChat() {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   });
 
-  sendBtn.addEventListener("click", sendMessage);
+  sendBtn.addEventListener("click", () => sendMessage());
   sendBtn.disabled = true;
 }
 
