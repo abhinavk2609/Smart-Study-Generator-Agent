@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Study Generator — AI Study Companion</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ─── HEADER ─────────────────────────────────────────────────── -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon-wrap">&#127891;</div>
+        <div>
+          <h1>Smart Study Generator</h1>
+          <p class="logo-sub">AI-Powered Personalized Study Companion</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span class="model-badge">Groq &middot; qwen3.8-27b</span>
+        <span id="status-dot" class="status-dot" title="Checking backend…"></span>
+        <span id="status-label" class="status-label">Connecting…</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ─── MAIN LAYOUT ─────────────────────────────────────────────── -->
+  <div class="app-layout">
+
+    <!-- ── SIDEBAR ── -->
+    <aside class="sidebar">
+
+      <!-- Student Profile -->
+      <section class="card profile-card">
+        <h2 class="card-title"><span class="icon-sq">&#128100;</span> Student Profile</h2>
+        <form id="profile-form" autocomplete="off">
+          <label>Name
+            <input type="text" id="p-name" placeholder="Your full name" maxlength="100" />
+          </label>
+          <label>Course / Class
+            <input type="text" id="p-course" placeholder="e.g. Class 12 / B.Sc Physics" maxlength="100" />
+          </label>
+          <label>Subjects
+            <input type="text" id="p-subjects" placeholder="e.g. Physics, Math, Chemistry" maxlength="200" />
+          </label>
+          <label>Learning Preference
+            <select id="p-pref">
+              <option value="">Select preference…</option>
+              <option value="visual">Visual (diagrams &amp; charts)</option>
+              <option value="reading">Reading / Writing</option>
+              <option value="practice">Practice &amp; Examples</option>
+              <option value="mixed">Mixed</option>
+            </select>
+          </label>
+          <div class="form-row">
+            <label>Study Hours / Day
+              <input type="number" id="p-hours" placeholder="e.g. 3" min="0.5" max="16" step="0.5" />
+            </label>
+            <label>Exam Date
+              <input type="date" id="p-exam-date" />
+            </label>
+          </div>
+          <label>Syllabus / Topics <span class="opt">(optional)</span>
+            <textarea id="p-syllabus" rows="3" placeholder="Paste your syllabus or list of topics…" maxlength="2000"></textarea>
+          </label>
+          <label>Known Weak Areas <span class="opt">(optional)</span>
+            <input type="text" id="p-weak" placeholder="e.g. Calculus, Organic Chemistry" maxlength="300" />
+          </label>
+          <button type="submit" class="btn btn-primary btn-full">Save Profile</button>
+        </form>
+        <p id="profile-status" class="form-status"></p>
+      </section>
+
+      <!-- Upload Documents -->
+      <section class="card upload-card">
+        <h2 class="card-title"><span class="icon-sq">&#128194;</span> Study Material</h2>
+        <div id="drop-zone" class="drop-zone" role="button" tabindex="0" aria-label="Upload study material">
+          <div class="drop-icon">&#128196;</div>
+          <p class="drop-main">Drop PDFs, images, or text files here</p>
+          <p class="drop-hint">or <label for="file-input" class="link-label">browse files</label></p>
+          <input type="file" id="file-input" multiple
+            accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.txt,.md" hidden />
+        </div>
+        <div id="file-list" class="file-list"></div>
+        <button id="upload-btn" class="btn btn-secondary btn-full" disabled>&#8679; Upload Files</button>
+        <p id="upload-status" class="form-status"></p>
+      </section>
+
+      <!-- Quick Actions -->
+      <section class="card">
+        <h2 class="card-title"><span class="icon-sq">&#9889;</span> Quick Actions</h2>
+        <div class="quick-actions">
+          <button class="btn-action" data-action="summarise">&#128203; Summarise</button>
+          <button class="btn-action" data-action="create_flashcards">&#127183; Flashcards</button>
+          <button class="btn-action" data-action="create_quiz">&#128221; Practice Quiz</button>
+          <button class="btn-action" data-action="concept_map">&#128205; Concept Map</button>
+          <button class="btn-action" data-action="exam_notes">&#127919; Exam Notes</button>
+          <button class="btn-action" data-action="identify_weak_areas">&#9888; Weak Areas</button>
+          <button class="btn-action" data-action="generate_plan">&#128197; Study Plan</button>
+          <button class="btn-action" data-action="progress_report">&#128202; Progress</button>
+        </div>
+      </section>
+
+    </aside>
+
+    <!-- ── MAIN CONTENT ── -->
+    <main class="main-content">
+
+      <!-- Alert Banner -->
+      <div id="alert-banner" class="alert-banner hidden"></div>
+
+      <!-- Tabs -->
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="chat">&#128172; Chat</button>
+        <button class="tab-btn" data-tab="dashboard">&#128202; Dashboard</button>
+        <button class="tab-btn" data-tab="quiz-tracker">&#127942; Quiz Tracker</button>
+      </div>
+
+      <!-- ── CHAT TAB ── -->
+      <div id="tab-chat" class="tab-panel active">
+        <div id="chat-messages" class="chat-messages">
+          <div class="chat-message assistant-message welcome-msg">
+            <div class="msg-avatar">&#127891;</div>
+            <div class="msg-body">
+              <p><strong>Hello! I'm your Smart Study Assistant.</strong></p>
+              <p>Fill in your <strong>Student Profile</strong> on the left, upload study material, then ask me anything!</p>
+              <p>Use <strong>Quick Actions</strong> to instantly generate summaries, flashcards, quizzes, study plans, and more.</p>
+              <p class="ai-label">&#129302; AI-generated — always verify important academic info with official sources.</p>
+            </div>
+          </div>
+        </div>
+        <div class="chat-input-area">
+          <textarea id="chat-input"
+            placeholder="Ask anything… e.g. 'Explain Newton's laws', 'Make flashcards on Chapter 3'…"
+            rows="3" maxlength="5000"></textarea>
+          <div class="input-actions">
+            <span id="char-count" class="char-count">0 / 5000</span>
+            <button id="send-btn" class="btn btn-primary" disabled>Send &#10148;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── DASHBOARD TAB ── -->
+      <div id="tab-dashboard" class="tab-panel hidden">
+
+        <div class="dashboard-grid">
+          <div class="stat-card stat-blue">
+            <div class="stat-icon-box">&#128218;</div>
+            <div class="stat-value" id="stat-queries">0</div>
+            <div class="stat-label">Total Queries</div>
+          </div>
+          <div class="stat-card stat-green">
+            <div class="stat-icon-box">&#128196;</div>
+            <div class="stat-value" id="stat-docs">0</div>
+            <div class="stat-label">Docs Uploaded</div>
+          </div>
+          <div class="stat-card stat-orange">
+            <div class="stat-icon-box">&#127942;</div>
+            <div class="stat-value" id="stat-avg-score"><span class="no-data">N/A</span></div>
+            <div class="stat-label">Avg Quiz Score</div>
+          </div>
+          <div class="stat-card stat-purple">
+            <div class="stat-icon-box">&#127919;</div>
+            <div class="stat-value" id="stat-topics">0</div>
+            <div class="stat-label">Topics Studied</div>
+          </div>
+        </div>
+
+        <div class="dashboard-detail">
+          <div class="card">
+            <h3 class="card-title">&#128204; Topics Studied</h3>
+            <div id="topics-list" class="tag-list"><em class="muted">None yet — start studying!</em></div>
+          </div>
+          <div class="card">
+            <h3 class="card-title">&#9888; Weak Areas</h3>
+            <div id="weak-list" class="tag-list tag-weak"><em class="muted">No weak areas identified yet.</em></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title">&#128200; Quiz Score History</h3>
+          <div id="score-chart" class="score-chart-container">
+            <p class="muted">No quiz scores yet. Take a practice quiz to see your progress!</p>
+          </div>
+        </div>
+
+        <div class="card dashboard-actions">
+          <button id="refresh-dashboard" class="btn btn-secondary">&#8635; Refresh</button>
+          <button id="clear-session-btn" class="btn btn-danger">&#128465; Clear Session</button>
+        </div>
+      </div>
+
+      <!-- ── QUIZ TRACKER TAB ── -->
+      <div id="tab-quiz-tracker" class="tab-panel hidden">
+        <div class="card">
+          <h2 class="card-title">&#127942; Record Quiz Score</h2>
+          <form id="score-form" class="score-form">
+            <label>Topic
+              <input type="text" id="score-topic" placeholder="e.g. Newton's Laws" maxlength="100" />
+            </label>
+            <label>Score
+              <input type="number" id="score-value" placeholder="e.g. 8" min="0" max="100" />
+            </label>
+            <label>Out of
+              <input type="number" id="score-total" placeholder="e.g. 10" min="1" max="100" />
+            </label>
+            <div class="score-form-btn">
+              <button type="submit" class="btn btn-primary">Record</button>
+            </div>
+          </form>
+          <p id="score-status" class="form-status"></p>
+        </div>
+        <div class="card">
+          <h2 class="card-title">&#128203; Score History</h2>
+          <div id="score-history-list" class="score-history">
+            <p class="muted">No scores recorded yet.</p>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ─── FOOTER ─────────────────────────────────────────────────── -->
+  <footer class="app-footer">
+    <p>Smart Study Generator &nbsp;&middot;&nbsp; Powered by <strong>Groq</strong> + <strong>Qwen 3.8-27B</strong>
+      &nbsp;&middot;&nbsp; AI-generated content — verify with your teacher or official curriculum.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
