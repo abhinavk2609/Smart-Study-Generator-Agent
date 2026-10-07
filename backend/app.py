@@ -23,6 +23,7 @@ from guardrails import (
     sanitise_filename,
     validate_uploaded_file,
 )
+from security import security_check, add_security_headers, get_security_status
 
 load_dotenv()
 
@@ -41,6 +42,17 @@ app = Flask(__name__, static_folder=str(_FRONTEND_DIR), static_url_path="")
 CORS(app, origins=["http://localhost:5500", "http://127.0.0.1:5500",
                    "http://localhost:8080", "http://localhost:5000",
                    "http://127.0.0.1:5000", "null"])
+
+# ---------------------------------------------------------------------------
+# Security hooks — run on every request
+# ---------------------------------------------------------------------------
+@app.before_request
+def before_request_security():
+    return security_check()
+
+@app.after_request
+def after_request_headers(response):
+    return add_security_headers(response)
 
 
 # ---------------------------------------------------------------------------
@@ -303,6 +315,19 @@ def clear_session():
         _progress_store.pop(session_id, None)
         _session_docs.pop(session_id, None)
     return jsonify({"status": "cleared"})
+
+
+
+# ---------------------------------------------------------------------------
+# GET /api/security-status — internal security dashboard (localhost only)
+# ---------------------------------------------------------------------------
+@app.route("/api/security-status", methods=["GET"])
+def security_status_route():
+    client_ip = request.remote_addr
+    if client_ip not in ("127.0.0.1", "::1"):
+        return jsonify({"error": "Forbidden"}), 403
+    return jsonify(get_security_status())
+
 
 
 # ---------------------------------------------------------------------------
